@@ -463,6 +463,7 @@ class PromptCompressor:
         drop_consecutive: bool = False,
         chunk_end_tokens: List[str] = [".", "\n"],
         strict_preserve_uncompressed: bool = True,
+        lang: str = "auto",
     ):
         """
         Compresses the given context.
@@ -559,6 +560,24 @@ class PromptCompressor:
             context = [" "]
         if isinstance(context, str):
             context = [context]
+
+        # Japanese language detection and tokenization
+        if lang == "auto":
+            # Auto-detect Japanese text
+            from .tokenizer_jp import is_japanese_text
+
+            all_text = "\n\n".join([instruction] + context + [question]).strip()
+            lang = "ja" if is_japanese_text(all_text) else "en"
+        elif lang == "ja":
+            # Apply Japanese tokenization
+            from .tokenizer_jp import tokenize_jp
+
+            context = [tokenize_jp(text) for text in context]
+            if instruction:
+                instruction = tokenize_jp(instruction)
+            if question:
+                question = tokenize_jp(question)
+
         assert not (
             rank_method == "longllmlingua" and not question
         ), "In the LongLLMLingua, it is necessary to set a question."
@@ -2270,9 +2289,11 @@ class PromptCompressor:
                 words.append(token)
                 word_probs.append(
                     [
-                        1.0
-                        if force_reserve_digit and bool(re.search(r"\d", token))
-                        else prob
+                        (
+                            1.0
+                            if force_reserve_digit and bool(re.search(r"\d", token))
+                            else prob
+                        )
                     ]
                 )
                 word_probs_no_force.append([prob_no_force])
