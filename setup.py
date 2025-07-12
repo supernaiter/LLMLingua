@@ -29,6 +29,8 @@ INSTALL_REQUIRES = [
     "tiktoken",
     "nltk",
     "numpy",
+    "fugashi>=1.2.0",
+    "unidic-lite>=1.0.8",
 ]
 QUANLITY_REQUIRES = [
     "black==21.4b0",
