@@ -1,0 +1,965 @@
+diff --git a/.gitignore b/.gitignore
+index 7508476..acc9eea 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -401,3 +401,10 @@ FodyWeavers.xsd
+ # build
+ build/*
+ dist/*
++
++#jp dev
++.specstory
++.venv
++.vscode
++docs-dev/
++requirements-dev.txt
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index 0c32850..60dabb8 100644
+--- a/README.md
++++ b/README.md
+@@ -133,6 +133,38 @@ If you find this repo helpful, please cite the following papers:
+ }
+ ```
+ 
++## 🌸 Japanese Text Support
++
++LLMLingua-JP extends the original LLMLingua with first-class support for Japanese text compression. It uses **fugashi + unidic-lite** for accurate Japanese tokenization and provides automatic language detection.
++
++### Key Features:
++- **Automatic Japanese Detection**: Detects Japanese text using Unicode character analysis
++- **Accurate Tokenization**: Uses fugashi with unidic-lite dictionary for proper Japanese word segmentation
++- **Preserved Sentence Structure**: Maintains original sentence order and punctuation
++- **Backward Compatibility**: Fully compatible with existing English functionality
++
++### Usage:
++```python
++from llmlingua import PromptCompressor
++
++compressor = PromptCompressor()
++
++# Automatic language detection
++result = compressor.compress_prompt(
++    context=["自然言語処理は人工知能の一分野です。", "機械学習と深層学習を活用します。"],
++    question="自然言語処理とは何ですか？",
++    rate=0.5,
++    lang="auto"  # Automatically detects Japanese
++)
++
++# Explicit Japanese processing
++result = compressor.compress_prompt(
++    context=["私は学生です。", "大学で勉強しています。"],
++    rate=0.5,
++    lang="ja"  # Force Japanese processing
++)
++```
++
+ ## 🎯 Quick Start
+ 
+ #### 1. **Installing LLMLingua:**
+@@ -143,6 +175,12 @@ To get started with LLMLingua, simply install it using pip:
+ pip install llmlingua
+ ```
+ 
++**For Japanese text support**, install with additional dependencies:
++
++```bash
++pip install llmlingua[fugashi,unidic-lite]
++```
++
+ #### 2. **Using LLMLingua Series Methods for Prompt Compression:**
+ 
+ With **LLMLingua**, you can easily compress your prompts. Here’s how you can do it:
+@@ -153,6 +191,16 @@ from llmlingua import PromptCompressor
+ llm_lingua = PromptCompressor()
+ compressed_prompt = llm_lingua.compress_prompt(prompt, instruction="", question="", target_token=200)
+ 
++# For Japanese text compression
++japanese_prompt = ["自然言語処理は人工知能の一分野です。", "機械学習と深層学習を活用します。"]
++compressed_jp = llm_lingua.compress_prompt(
++    context=japanese_prompt,
++    question="自然言語処理とは何ですか？",
++    rate=0.5,
++    lang="ja"  # or "auto" for automatic detection
++)
++```
++
+ # > {'compressed_prompt': 'Question: Sam bought a dozen boxes, each with 30 highlighter pens inside, for $10 each box. He reanged five of boxes into packages of sixlters each and sold them $3 per. He sold the rest theters separately at the of three pens $2. How much did make in total, dollars?\nLets think step step\nSam bought 1 boxes x00 oflters.\nHe bought 12 * 300ters in total\nSam then took 5 boxes 6ters0ters.\nHe sold these boxes for 5 *5\nAfterelling these  boxes there were 3030 highlighters remaining.\nThese form 330 / 3 = 110 groups of three pens.\nHe sold each of these groups for $2 each, so made 110 * 2 = $220 from them.\nIn total, then, he earned $220 + $15 = $235.\nSince his original cost was $120, he earned $235 - $120 = $115 in profit.\nThe answer is 115',
+ #  'origin_tokens': 2365,
+ #  'compressed_tokens': 211,
+diff --git a/examples/japanese_compression_demo.py b/examples/japanese_compression_demo.py
+new file mode 100644
+index 0000000..6ce8930
+--- /dev/null
++++ b/examples/japanese_compression_demo.py
+@@ -0,0 +1,160 @@
++#!/usr/bin/env python3
++"""
++Japanese Prompt Compression Demo
++
++This script demonstrates the Japanese text compression capabilities of LLMLingua-JP.
++"""
++
++import time
++from llmlingua import PromptCompressor
++
++
++def demo_japanese_compression():
++    """Demonstrate Japanese text compression."""
++    
++    print("🌸 LLMLingua-JP Japanese Compression Demo")
++    print("=" * 50)
++    
++    # Initialize compressor
++    print("Loading compressor...")
++    compressor = PromptCompressor(device_map="cpu")
++    
++    # Sample Japanese text
++    japanese_context = [
++        "自然言語処理（Natural Language Processing、NLP）は、",
++        "人間が日常的に使っている自然言語をコンピュータに処理させる一連の技術であり、",
++        "人工知能と言語学の一分野である。",
++        "自然言語処理の研究は、計算言語学（computational linguistics）と密接に関連しており、",
++        "両者を合わせて計算言語学と呼ばれることもある。",
++        "自然言語処理は、音声認識、機械翻訳、情報抽出、質問応答システム、",
++        "テキスト要約、感情分析など、様々な応用分野がある。",
++        "近年では、深層学習の発展により、自然言語処理の性能が大幅に向上している。",
++        "特に、Transformerアーキテクチャに基づくモデルが多くのタスクで優れた性能を示している。"
++    ]
++    
++    question = "自然言語処理とは何ですか？その応用分野について教えてください。"
++    
++    print(f"\n📝 Original Text ({len(japanese_context)} sentences):")
++    for i, text in enumerate(japanese_context, 1):
++        print(f"  {i}. {text}")
++    
++    print(f"\n❓ Question: {question}")
++    
++    # Test different compression rates
++    rates = [0.8, 0.6, 0.4, 0.2]
++    
++    for rate in rates:
++        print(f"\n🔧 Compressing with rate {rate}...")
++        start_time = time.time()
++        
++        result = compressor.compress_prompt(
++            context=japanese_context,
++            question=question,
++            rate=rate,
++            lang="ja"
++        )
++        
++        end_time = time.time()
++        
++        print(f"⏱️  Compression time: {end_time - start_time:.2f}s")
++        print(f"📊 Original tokens: {result['origin_tokens']}")
++        print(f"📊 Compressed tokens: {result['compressed_tokens']}")
++        print(f"📊 Compression ratio: {result['ratio']}")
++        print(f"💰 Estimated savings: {result['saving']}")
++        
++        print(f"\n📄 Compressed text:")
++        print(f"  {result['compressed_prompt'][:200]}...")
++        print("-" * 50)
++
++
++def demo_auto_detection():
++    """Demonstrate automatic language detection."""
++    
++    print("\n🌐 Language Auto-Detection Demo")
++    print("=" * 50)
++    
++    compressor = PromptCompressor(device_map="cpu")
++    
++    # Mixed language text
++    mixed_context = [
++        "自然言語処理（Natural Language Processing）は、",
++        "人間の言語をコンピュータで処理する技術です。",
++        "Machine learning and deep learning are used.",
++        "音声認識や機械翻訳などの応用があります。"
++    ]
++    
++    print("📝 Mixed Language Text:")
++    for text in mixed_context:
++        print(f"  {text}")
++    
++    print("\n🔍 Testing auto-detection...")
++    result = compressor.compress_prompt(
++        context=mixed_context,
++        rate=0.5,
++        lang="auto"
++    )
++    
++    print(f"📊 Result: {result['compressed_tokens']} tokens (from {result['origin_tokens']})")
++    print(f"📄 Compressed: {result['compressed_prompt'][:150]}...")
++
++
++def demo_performance_comparison():
++    """Compare performance with and without Japanese processing."""
++    
++    print("\n⚡ Performance Comparison")
++    print("=" * 50)
++    
++    compressor = PromptCompressor(device_map="cpu")
++    
++    # English text
++    english_context = [
++        "Natural Language Processing (NLP) is a field of artificial intelligence.",
++        "It focuses on the interaction between computers and human language.",
++        "Machine learning and deep learning techniques are widely used.",
++        "Applications include speech recognition, machine translation, and text summarization."
++    ]
++    
++    # Japanese text
++    japanese_context = [
++        "自然言語処理は人工知能の一分野です。",
++        "コンピュータと人間の言語の相互作用に焦点を当てています。",
++        "機械学習と深層学習の技術が広く使用されています。",
++        "応用分野には音声認識、機械翻訳、テキスト要約などがあります。"
++    ]
++    
++    print("🔤 English Text Processing:")
++    start_time = time.time()
++    en_result = compressor.compress_prompt(context=english_context, rate=0.5)
++    en_time = time.time() - start_time
++    
++    print(f"  Time: {en_time:.2f}s")
++    print(f"  Tokens: {en_result['compressed_tokens']}/{en_result['origin_tokens']}")
++    
++    print("\n🇯🇵 Japanese Text Processing:")
++    start_time = time.time()
++    jp_result = compressor.compress_prompt(context=japanese_context, rate=0.5, lang="ja")
++    jp_time = time.time() - start_time
++    
++    print(f"  Time: {jp_time:.2f}s")
++    print(f"  Tokens: {jp_result['compressed_tokens']}/{jp_result['origin_tokens']}")
++    
++    print(f"\n📈 Performance difference: {jp_time - en_time:.2f}s")
++
++
++if __name__ == "__main__":
++    try:
++        demo_japanese_compression()
++        demo_auto_detection()
++        demo_performance_comparison()
++        
++        print("\n✅ Demo completed successfully!")
++        print("\n💡 Tips:")
++        print("  - Use lang='auto' for automatic language detection")
++        print("  - Use lang='ja' for explicit Japanese processing")
++        print("  - Adjust rate parameter to control compression level")
++        print("  - Japanese tokenization preserves sentence structure")
++        
++    except Exception as e:
++        print(f"❌ Error during demo: {e}")
++        print("Make sure you have installed the required dependencies:")
++        print("  pip install fugashi unidic-lite") 
+\ No newline at end of file
+diff --git a/llmlingua/prompt_compressor.py b/llmlingua/prompt_compressor.py
+index 7af7920..be40b81 100644
+--- a/llmlingua/prompt_compressor.py
++++ b/llmlingua/prompt_compressor.py
+@@ -463,6 +463,7 @@ class PromptCompressor:
+         drop_consecutive: bool = False,
+         chunk_end_tokens: List[str] = [".", "\n"],
+         strict_preserve_uncompressed: bool = True,
++        lang: str = "auto",
+     ):
+         """
+         Compresses the given context.
+@@ -559,6 +560,24 @@ class PromptCompressor:
+             context = [" "]
+         if isinstance(context, str):
+             context = [context]
++
++        # Japanese language detection and tokenization
++        if lang == "auto":
++            # Auto-detect Japanese text
++            from .tokenizer_jp import is_japanese_text
++
++            all_text = "\n\n".join([instruction] + context + [question]).strip()
++            lang = "ja" if is_japanese_text(all_text) else "en"
++        elif lang == "ja":
++            # Apply Japanese tokenization
++            from .tokenizer_jp import tokenize_jp
++
++            context = [tokenize_jp(text) for text in context]
++            if instruction:
++                instruction = tokenize_jp(instruction)
++            if question:
++                question = tokenize_jp(question)
++
+         assert not (
+             rank_method == "longllmlingua" and not question
+         ), "In the LongLLMLingua, it is necessary to set a question."
+@@ -2270,9 +2289,11 @@ class PromptCompressor:
+                 words.append(token)
+                 word_probs.append(
+                     [
+-                        1.0
+-                        if force_reserve_digit and bool(re.search(r"\d", token))
+-                        else prob
++                        (
++                            1.0
++                            if force_reserve_digit and bool(re.search(r"\d", token))
++                            else prob
++                        )
+                     ]
+                 )
+                 word_probs_no_force.append([prob_no_force])
+diff --git a/llmlingua/tokenizer_jp.py b/llmlingua/tokenizer_jp.py
+new file mode 100644
+index 0000000..cff6485
+--- /dev/null
++++ b/llmlingua/tokenizer_jp.py
+@@ -0,0 +1,117 @@
++"""
++Japanese tokenizer for LLMLingua using fugashi + unidic-lite.
++Provides tokenization that preserves sentence structure and punctuation.
++"""
++
++import re
++from typing import List, Tuple
++
++try:
++    import fugashi
++    import unidic_lite
++except ImportError:
++    raise ImportError(
++        "Japanese tokenization requires fugashi and unidic-lite. "
++        "Install with: pip install fugashi unidic-lite"
++    )
++
++
++class JapaneseTokenizer:
++    """Japanese text tokenizer using fugashi with unidic-lite dictionary."""
++
++    def __init__(self):
++        """Initialize the Japanese tokenizer."""
++        self.tagger = fugashi.Tagger()
++
++    def tokenize(self, text: str) -> List[str]:
++        """
++        Tokenize Japanese text into words.
++
++        Args:
++            text: Input Japanese text
++
++        Returns:
++            List of tokenized words
++        """
++        if not text or not text.strip():
++            return []
++
++        # Parse with fugashi
++        words = self.tagger(text)
++
++        # Extract surface forms and filter empty tokens
++        tokens = [word.surface for word in words if word.surface.strip()]
++
++        return tokens
++
++    def tokenize_with_pos(self, text: str) -> List[Tuple[str, str]]:
++        """
++        Tokenize Japanese text with part-of-speech information.
++
++        Args:
++            text: Input Japanese text
++
++        Returns:
++            List of (token, pos) tuples
++        """
++        if not text or not text.strip():
++            return []
++
++        words = self.tagger(text)
++        tokens_with_pos = [
++            (word.surface, word.pos) for word in words if word.surface.strip()
++        ]
++
++        return tokens_with_pos
++
++
++def tokenize_jp(text: str, preserve_punctuation: bool = True) -> str:
++    """
++    Tokenize Japanese text and return space-separated string.
++
++    Args:
++        text: Input Japanese text
++        preserve_punctuation: Whether to preserve punctuation marks
++
++    Returns:
++        Space-separated tokenized text
++    """
++    tokenizer = JapaneseTokenizer()
++    tokens = tokenizer.tokenize(text)
++
++    if not preserve_punctuation:
++        # Remove punctuation tokens
++        tokens = [token for token in tokens if not re.match(r"^[^\w\s]+$", token)]
++
++    return " ".join(tokens)
++
++
++def is_japanese_text(text: str, threshold: float = 0.3) -> bool:
++    """
++    Detect if text contains Japanese characters.
++
++    Args:
++        text: Input text to check
++        threshold: Minimum ratio of Japanese characters to consider as Japanese
++
++    Returns:
++        True if text is likely Japanese
++    """
++    if not text:
++        return False
++
++    # Japanese character ranges
++    hiragana = "\u3040-\u309f"
++    katakana = "\u30a0-\u30ff"
++    kanji = "\u4e00-\u9faf"
++    jp_chars = f"[{hiragana}{katakana}{kanji}]"
++
++    # Count Japanese characters
++    jp_char_count = len(re.findall(jp_chars, text))
++    total_chars = len(text.strip())
++
++    if total_chars == 0:
++        return False
++
++    ratio = jp_char_count / total_chars
++    return ratio >= threshold
+diff --git a/llmlingua/utils.py b/llmlingua/utils.py
+index a08f615..897ca6b 100644
+--- a/llmlingua/utils.py
++++ b/llmlingua/utils.py
+@@ -79,9 +79,11 @@ def seed_everything(seed: int):
+ 
+ 
+ def is_begin_of_new_word(token, model_name, force_tokens, token_map):
+-    if "bert-base-multilingual-cased" in model_name \
+-            or "tinybert" in model_name.lower() \
+-            or "mobilebert" in model_name.lower():
++    if (
++        "bert-base-multilingual-cased" in model_name
++        or "tinybert" in model_name.lower()
++        or "mobilebert" in model_name.lower()
++    ):
+         if token.lstrip("##") in force_tokens or token.lstrip("##") in set(
+             token_map.values()
+         ):
+@@ -106,9 +108,11 @@ def replace_added_token(token, token_map):
+ 
+ 
+ def get_pure_token(token, model_name):
+-    if "bert-base-multilingual-cased" in model_name \
+-            or "tinybert" in model_name.lower() \
+-            or "mobilebert" in model_name.lower():
++    if (
++        "bert-base-multilingual-cased" in model_name
++        or "tinybert" in model_name.lower()
++        or "mobilebert" in model_name.lower()
++    ):
+         return token.lstrip("##")
+     elif "xlm-roberta-large" in model_name:
+         return token.lstrip("▁")
+diff --git a/setup.py b/setup.py
+index ae0f4fb..d810261 100644
+--- a/setup.py
++++ b/setup.py
+@@ -29,6 +29,8 @@ INSTALL_REQUIRES = [
+     "tiktoken",
+     "nltk",
+     "numpy",
++    "fugashi>=1.2.0",
++    "unidic-lite>=1.0.8",
+ ]
+ QUANLITY_REQUIRES = [
+     "black==21.4b0",
+diff --git a/tests/test_integration_jp.py b/tests/test_integration_jp.py
+new file mode 100644
+index 0000000..f10fd39
+--- /dev/null
++++ b/tests/test_integration_jp.py
+@@ -0,0 +1,153 @@
++"""
++Integration tests for Japanese prompt compression.
++"""
++
++import pytest
++from llmlingua import PromptCompressor
++
++
++class TestJapaneseIntegration:
++    """Integration tests for Japanese prompt compression."""
++    
++    @pytest.fixture
++    def compressor(self):
++        """Create a compressor instance for testing."""
++        return PromptCompressor(device_map="cpu")
++    
++    def test_japanese_compression_basic(self, compressor):
++        """Test basic Japanese text compression."""
++        context = [
++            "自然言語処理（Natural Language Processing）は、",
++            "人間が日常的に使っている自然言語をコンピュータに処理させる一連の技術です。",
++            "人工知能と言語学の一分野として位置づけられています。"
++        ]
++        
++        result = compressor.compress_prompt(
++            context=context,
++            rate=0.5,
++            lang="ja"
++        )
++        
++        assert "compressed_prompt" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++        assert result["compressed_tokens"] > 0
++        
++        # Should preserve some Japanese content
++        compressed = result["compressed_prompt"]
++        assert any(ord(char) > 127 for char in compressed)
++    
++    def test_japanese_auto_detection(self, compressor):
++        """Test automatic Japanese language detection."""
++        jp_context = ["日本語のテキストです。", "機械学習を活用します。"]
++        en_context = ["This is English text.", "Machine learning is used."]
++        
++        # Japanese should be detected
++        jp_result = compressor.compress_prompt(
++            context=jp_context,
++            rate=0.5,
++            lang="auto"
++        )
++        
++        # English should not trigger Japanese processing
++        en_result = compressor.compress_prompt(
++            context=en_context,
++            rate=0.5,
++            lang="auto"
++        )
++        
++        assert jp_result["compressed_tokens"] <= jp_result["origin_tokens"]
++        assert en_result["compressed_tokens"] <= en_result["origin_tokens"]
++    
++    def test_japanese_with_question(self, compressor):
++        """Test Japanese compression with question."""
++        context = [
++            "東京は日本の首都です。",
++            "人口は約1400万人です。",
++            "多くの企業の本社があります。"
++        ]
++        question = "東京について教えてください。"
++        
++        result = compressor.compress_prompt(
++            context=context,
++            question=question,
++            rate=0.5,
++            lang="ja"
++        )
++        
++        assert "compressed_prompt" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++    
++    def test_japanese_compression_ratio_control(self, compressor):
++        """Test Japanese compression ratio control."""
++        context = [
++            "自然言語処理は、人間の言語をコンピュータで処理する技術です。",
++            "機械学習、特に深層学習の発展により、性能が大幅に向上しました。",
++            "音声認識、機械翻訳、情報抽出など、様々な応用分野があります。"
++        ]
++        
++        # High compression rate
++        high_result = compressor.compress_prompt(
++            context=context,
++            rate=0.3,
++            lang="ja"
++        )
++        
++        # Low compression rate
++        low_result = compressor.compress_prompt(
++            context=context,
++            rate=0.8,
++            lang="ja"
++        )
++        
++        # High compression should result in fewer tokens
++        high_ratio = high_result["compressed_tokens"] / high_result["origin_tokens"]
++        low_ratio = low_result["compressed_tokens"] / low_result["origin_tokens"]
++        
++        assert high_ratio <= low_ratio
++    
++    def test_japanese_backward_compatibility(self, compressor):
++        """Test that Japanese support doesn't break English functionality."""
++        en_context = ["This is English text for testing.", "It should work normally."]
++        
++        # Should work with default settings (no lang parameter)
++        result = compressor.compress_prompt(
++            context=en_context,
++            rate=0.5
++        )
++        
++        assert "compressed_prompt" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++        
++        # Should work with explicit English
++        result_explicit = compressor.compress_prompt(
++            context=en_context,
++            rate=0.5,
++            lang="auto"  # Should detect as English
++        )
++        
++        assert "compressed_prompt" in result_explicit
++        assert result_explicit["compressed_tokens"] <= result_explicit["origin_tokens"]
++
++
++@pytest.mark.benchmark
++class TestJapanesePerformance:
++    """Performance tests for Japanese compression."""
++    
++    def test_japanese_tokenization_speed(self, benchmark):
++        """Benchmark Japanese tokenization speed."""
++        from llmlingua.tokenizer_jp import tokenize_jp
++        
++        text = "自然言語処理は人工知能の一分野であり、機械学習と深層学習を活用して人間の言語をコンピュータで処理する技術です。"
++        
++        result = benchmark(tokenize_jp, text)
++        assert isinstance(result, str)
++        assert len(result) > 0
++    
++    def test_japanese_detection_speed(self, benchmark):
++        """Benchmark Japanese text detection speed."""
++        from llmlingua.tokenizer_jp import is_japanese_text
++        
++        text = "Hello 世界！This is a mixed text with Japanese characters."
++        
++        result = benchmark(is_japanese_text, text)
++        assert isinstance(result, bool) 
+\ No newline at end of file
+diff --git a/tests/test_prompt_compressor_jp.py b/tests/test_prompt_compressor_jp.py
+new file mode 100644
+index 0000000..3d36add
+--- /dev/null
++++ b/tests/test_prompt_compressor_jp.py
+@@ -0,0 +1,154 @@
++"""
++Tests for Japanese prompt compression functionality.
++"""
++
++import pytest
++
++from llmlingua import PromptCompressor
++
++
++class TestJapanesePromptCompression:
++    """Test cases for Japanese prompt compression."""
++
++    def test_japanese_detection_auto(self):
++        """Test automatic Japanese text detection."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        # Japanese text
++        jp_context = [
++            "自然言語処理は人工知能の一分野です。",
++            "機械学習と深層学習を活用します。",
++        ]
++        jp_question = "自然言語処理とは何ですか？"
++
++        result = compressor.compress_prompt(
++            context=jp_context, question=jp_question, rate=0.5, lang="auto"
++        )
++
++        assert "compressed_prompt" in result
++        assert "origin_tokens" in result
++        assert "compressed_tokens" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++
++    def test_japanese_explicit_lang(self):
++        """Test explicit Japanese language setting."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        jp_context = ["私は学生です。", "大学で勉強しています。"]
++        jp_question = "あなたは何をしていますか？"
++
++        result = compressor.compress_prompt(
++            context=jp_context, question=jp_question, rate=0.5, lang="ja"
++        )
++
++        assert "compressed_prompt" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++
++    def test_mixed_japanese_english(self):
++        """Test mixed Japanese and English text."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        mixed_context = [
++            "自然言語処理（Natural Language Processing）は、",
++            "人間の言語をコンピュータで処理する技術です。",
++            "Machine learning and deep learning are used.",
++        ]
++        mixed_question = "What is NLP?"
++
++        result = compressor.compress_prompt(
++            context=mixed_context, question=mixed_question, rate=0.5, lang="auto"
++        )
++
++        assert "compressed_prompt" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++
++    def test_japanese_tokenization_preservation(self):
++        """Test that Japanese tokenization preserves meaning."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        jp_text = "美しい桜の花が咲いています。"
++
++        result = compressor.compress_prompt(
++            context=[jp_text], rate=0.8, lang="ja"  # High rate to preserve more content
++        )
++
++        compressed = result["compressed_prompt"]
++        # Should contain some Japanese characters
++        assert any(ord(char) > 127 for char in compressed)
++
++    def test_japanese_compression_ratio(self):
++        """Test Japanese compression ratio."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        jp_context = [
++            "自然言語処理は、人間が日常的に使っている自然言語を",
++            "コンピュータに処理させる一連の技術であり、",
++            "人工知能と言語学の一分野である。",
++            "機械学習、特に深層学習の発展により、",
++            "自然言語処理の性能は大幅に向上した。",
++        ]
++
++        result = compressor.compress_prompt(context=jp_context, rate=0.5, lang="ja")
++
++        # Check compression ratio
++        ratio = result["compressed_tokens"] / result["origin_tokens"]
++        assert ratio <= 0.6  # Should be compressed (allow some tolerance)
++
++    def test_japanese_with_instruction(self):
++        """Test Japanese compression with instruction."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        instruction = "以下の文章を要約してください："
++        jp_context = ["今日は良い天気です。", "公園で散歩をしました。"]
++
++        result = compressor.compress_prompt(
++            context=jp_context, instruction=instruction, rate=0.5, lang="ja"
++        )
++
++        assert "compressed_prompt" in result
++        assert result["compressed_tokens"] <= result["origin_tokens"]
++
++
++@pytest.mark.integration
++class TestJapaneseCompressionIntegration:
++    """Integration tests for Japanese compression."""
++
++    def test_long_japanese_text(self):
++        """Test compression of longer Japanese text."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        long_jp_text = [
++            "自然言語処理（しぜんげんごしょり、英語: natural language processing、略称: NLP）は、",
++            "人間が日常的に使っている自然言語をコンピュータに処理させる一連の技術であり、",
++            "人工知能と言語学の一分野である。",
++            "自然言語処理の研究は、計算言語学（computational linguistics）と密接に関連しており、",
++            "両者を合わせて計算言語学と呼ばれることもある。",
++            "自然言語処理は、音声認識、機械翻訳、情報抽出、質問応答システム、",
++            "テキスト要約、感情分析など、様々な応用分野がある。",
++        ]
++
++        result = compressor.compress_prompt(
++            context=long_jp_text, rate=0.3, lang="ja"  # More aggressive compression
++        )
++
++        assert result["compressed_tokens"] < result["origin_tokens"]
++        assert result["compressed_tokens"] / result["origin_tokens"] <= 0.4
++
++    def test_japanese_special_characters(self):
++        """Test handling of Japanese special characters."""
++        compressor = PromptCompressor(device_map="cpu")
++
++        special_chars_text = [
++            "「引用」や（括弧）など、様々な記号を含むテキスト。",
++            "カタカナ：アイウエオ、ひらがな：あいうえお",
++            "漢字：自然言語処理、数字：12345",
++        ]
++
++        result = compressor.compress_prompt(
++            context=special_chars_text, rate=0.5, lang="ja"
++        )
++
++        assert "compressed_prompt" in result
++        # Should preserve some special characters
++        compressed = result["compressed_prompt"]
++        assert len(compressed) > 0
+diff --git a/tests/test_tokenizer_jp.py b/tests/test_tokenizer_jp.py
+new file mode 100644
+index 0000000..cb3890b
+--- /dev/null
++++ b/tests/test_tokenizer_jp.py
+@@ -0,0 +1,161 @@
++"""
++Tests for Japanese tokenizer functionality.
++"""
++
++import pytest
++
++from llmlingua.tokenizer_jp import JapaneseTokenizer, is_japanese_text, tokenize_jp
++
++
++class TestJapaneseTokenizer:
++    """Test cases for JapaneseTokenizer class."""
++
++    def test_tokenizer_initialization(self):
++        """Test tokenizer can be initialized."""
++        tokenizer = JapaneseTokenizer()
++        assert tokenizer is not None
++        assert hasattr(tokenizer, "tagger")
++
++    def test_tokenize_basic_japanese(self):
++        """Test basic Japanese tokenization."""
++        tokenizer = JapaneseTokenizer()
++        text = "私は学生です。"
++        tokens = tokenizer.tokenize(text)
++
++        assert isinstance(tokens, list)
++        assert len(tokens) > 0
++        assert all(isinstance(token, str) for token in tokens)
++
++    def test_tokenize_with_pos(self):
++        """Test tokenization with part-of-speech information."""
++        tokenizer = JapaneseTokenizer()
++        text = "美しい花が咲いています。"
++        tokens_with_pos = tokenizer.tokenize_with_pos(text)
++
++        assert isinstance(tokens_with_pos, list)
++        assert len(tokens_with_pos) > 0
++        assert all(
++            isinstance(item, tuple) and len(item) == 2 for item in tokens_with_pos
++        )
++
++    def test_empty_text(self):
++        """Test handling of empty text."""
++        tokenizer = JapaneseTokenizer()
++
++        assert tokenizer.tokenize("") == []
++        assert tokenizer.tokenize("   ") == []
++        assert tokenizer.tokenize_with_pos("") == []
++        assert tokenizer.tokenize_with_pos("   ") == []
++
++
++class TestTokenizeJp:
++    """Test cases for tokenize_jp function."""
++
++    def test_basic_tokenization(self):
++        """Test basic tokenize_jp functionality."""
++        text = "今日は良い天気ですね。"
++        result = tokenize_jp(text)
++
++        assert isinstance(result, str)
++        assert len(result) > 0
++        assert " " in result  # Should be space-separated
++
++    def test_preserve_punctuation(self):
++        """Test punctuation preservation."""
++        text = "こんにちは！元気ですか？"
++
++        # With punctuation
++        result_with = tokenize_jp(text, preserve_punctuation=True)
++        assert "！" in result_with or "?" in result_with
++
++        # Without punctuation
++        result_without = tokenize_jp(text, preserve_punctuation=False)
++        assert "！" not in result_without and "?" not in result_without
++
++    def test_mixed_text(self):
++        """Test mixed Japanese and English text."""
++        text = "Hello 世界！This is a test."
++        result = tokenize_jp(text)
++
++        assert isinstance(result, str)
++        assert len(result) > 0
++
++    def test_empty_input(self):
++        """Test empty input handling."""
++        assert tokenize_jp("") == ""
++        assert tokenize_jp("   ") == ""
++
++
++class TestIsJapaneseText:
++    """Test cases for is_japanese_text function."""
++
++    def test_pure_japanese(self):
++        """Test pure Japanese text detection."""
++        text = "日本語のテキストです。"
++        assert is_japanese_text(text) is True
++
++    def test_mixed_text(self):
++        """Test mixed text detection."""
++        text = "Hello 世界！This is a test."
++        # This text has 2 Japanese chars out of 24 total = 0.083 ratio
++        # With default threshold 0.3, this should be False
++        assert is_japanese_text(text) is False
++
++    def test_english_only(self):
++        """Test English-only text."""
++        text = "This is English text only."
++        assert is_japanese_text(text) is False
++
++    def test_empty_text(self):
++        """Test empty text handling."""
++        assert is_japanese_text("") is False
++        assert is_japanese_text("   ") is False
++
++    def test_custom_threshold(self):
++        """Test custom threshold setting."""
++        text = "Hello 世界"  # 2 Japanese chars, 8 total chars = 0.25 ratio
++
++        # Default threshold (0.3) should return False
++        assert is_japanese_text(text) is False
++
++        # Lower threshold should return True
++        assert is_japanese_text(text, threshold=0.2) is True
++
++    def test_hiragana_katakana_kanji(self):
++        """Test different Japanese character types."""
++        hiragana = "あいうえお"
++        katakana = "アイウエオ"
++        kanji = "漢字"
++
++        assert is_japanese_text(hiragana) is True
++        assert is_japanese_text(katakana) is True
++        assert is_japanese_text(kanji) is True
++
++
++@pytest.mark.integration
++class TestTokenizerIntegration:
++    """Integration tests for tokenizer."""
++
++    def test_long_text(self):
++        """Test tokenization of longer text."""
++        text = """
++        自然言語処理（しぜんげんごしょり、英語: natural language processing、略称: NLP）は、
++        人間が日常的に使っている自然言語をコンピュータに処理させる一連の技術であり、
++        人工知能と言語学の一分野である。
++        """
++
++        result = tokenize_jp(text)
++        assert isinstance(result, str)
++        assert len(result) > 0
++
++        # Should preserve sentence structure
++        tokens = result.split()
++        assert len(tokens) > 10  # Should have multiple tokens
++
++    def test_special_characters(self):
++        """Test handling of special characters."""
++        text = "「引用」や（括弧）など、様々な記号を含むテキスト。"
++        result = tokenize_jp(text)
++
++        assert isinstance(result, str)
++        assert len(result) > 0

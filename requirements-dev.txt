@@ -1,0 +1,23 @@
+# Core dependencies (from setup.py)
+transformers>=4.26.0
+accelerate
+torch
+tiktoken
+nltk
+numpy
+
+# Quality tools (from setup.py QUANLITY_REQUIRES)
+black>=22.0.0
+flake8>=3.8.3
+isort>=5.5.4
+pre-commit
+pytest
+pytest-xdist
+
+# Japanese text processing dependencies
+fugashi>=1.2.0
+unidic-lite>=1.0.8
+
+# Additional development tools
+pytest-benchmark
+pytest-cov 
