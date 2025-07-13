@@ -221,11 +221,36 @@ print(compressed_prompt['compressed_prompt'])
 # Speaker 4: We have a promotion and a second time as councilman served Councilman Ringa and customers and they have any comments.
 ```
 
-#### 4. **Learning More:**
+#### 4. **CLI Usage:**
+
+Install with CLI support:
+```bash
+pip install "llmlingua[cli]"
+```
+
+Use the command-line tool to compress text from clipboard:
+```bash
+# Basic usage (50% compression)
+llmlingua-compress
+
+# Custom compression ratio
+llmlingua-compress --ratio 0.3
+
+# Use different model
+llmlingua-compress --model "microsoft/phi-2"
+
+# Set maximum length
+llmlingua-compress --max-length 500
+
+# Use GPU (if available)
+llmlingua-compress --device cuda
+```
+
+#### 5. **Learning More:**
 
 To understand how to apply LLMLingua and LongLLMLingua in real-world scenarios like RAG, Online Meetings, CoT, and Code, please refer to our [**examples**](./examples). For detailed guidance, the [**documentation**](./DOCUMENT.md) provides extensive recommendations on effectively utilizing LLMLingua.
 
-#### 5. **Data collection and model training of LLMLingua-2:**
+#### 6. **Data collection and model training of LLMLingua-2:**
 
 To train the compressor on your custom data, please refer to our [**data_collection**](./experiments/llmlingua2/data_collection) and [**model_training**](./experiments/llmlingua2/model_training).
 

@@ -30,6 +30,10 @@ INSTALL_REQUIRES = [
     "nltk",
     "numpy",
 ]
+
+CLI_REQUIRES = [
+    "pyperclip",
+]
 QUANLITY_REQUIRES = [
     "black==21.4b0",
     "flake8>=3.8.3",
@@ -62,6 +66,12 @@ setup(
     extras_require={
         "dev": DEV_REQUIRES,
         "quality": QUANLITY_REQUIRES,
+        "cli": CLI_REQUIRES,
+    },
+    entry_points={
+        "console_scripts": [
+            "llmlingua-compress=scripts.compress_clipboard:main",
+        ],
     },
     install_requires=INSTALL_REQUIRES,
     include_package_data=True,
